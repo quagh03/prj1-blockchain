@@ -1,0 +1,119 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+
+\geometry{margin=2.5cm}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+{\large CS251: Cryptocurrencies and Blockchain Technologies}\\[0.35em]
+{\large Fall 2026}\\[1.6em]
+{\LARGE\bfseries Programming Project \#1}\\[0.45em]
+{\Large Sinh Merkle proof}\\[2.2em]
+
+\begin{tabular}{@{}llr@{}}
+\toprule
+MSHV & Họ và tên & Tỷ lệ \\
+\midrule
+20261106M & Lê Quang Huy & 40\% \\
+20261120M & Nguyễn Duy Khánh & 25\% \\
+20261108M & Nguyễn Đức Thắng & 25\% \\
+--- & AI (hỗ trợ viết báo cáo) & 10\% \\
+\bottomrule
+\end{tabular}
+
+\vspace{2.4em}
+\begin{minipage}{0.92\textwidth}
+\raggedright
+\textbf{Ghi chú.} Nhóm có prompt AI khi làm bài. Phần 10\% của AI là ba mục Tóm tắt, Giải thích đề và Giải thích thuật ngữ. Câu prompt dùng cho từng mục nằm ở phần \textit{Các câu prompt đã thực hiện}. Phương án và code trong \texttt{prover.py} do nhóm đề xuất và hoàn thiện, rồi tự chạy prover với verifier để kiểm tra.
+\end{minipage}
+\end{titlepage}
+
+\section{Tóm tắt}
+
+Bài yêu cầu viết hàm \texttt{gen\_merkle\_proof()} trong \texttt{prover.py}. Hàm nhận 1000 lá cố định và một vị trí, trả về các hash chứng minh lá đó nằm đúng chỗ trong cây. \texttt{verifier.py} và \texttt{merkle\_utils.py} giữ nguyên.
+
+Cây cao 10, được đệm cho đủ 1024 lá. Proof đi từ lá lên gốc: mỗi tầng lấy hash của nút anh em. Chạy với lá 95 thì file sinh ra khớp \texttt{proof-for-leaf-95.txt}. Verifier chấp nhận lá 683. Sửa một ký tự trong file proof thì verifier từ chối.
+
+\section{Giải thích đề}
+
+Đề cho sẵn bốn file. \texttt{prover.py} tạo 1000 chuỗi dạng \texttt{"data item i"}, gọi hàm cần viết, rồi ghi proof ra \texttt{merkle\_proof.txt}: vị trí lá, giá trị lá, và danh sách hash. \texttt{verifier.py} giữ một Merkle root cố định. Nó đọc file proof, tự tính lại root từ lá và các hash, rồi so với root đó. Khớp thì lá đúng vị trí. \texttt{merkle\_utils.py} có lớp \texttt{MerkleProof} cùng hai hàm băm. \texttt{proof-for-leaf-95.txt} là proof mẫu của lá 95.
+
+Việc cần nộp chỉ là \texttt{prover.py}. Hàm thiếu có thể viết trong khoảng dưới mười dòng. Gợi ý trong đề là đọc cách verifier dựng root, vì prover phải sinh đúng các hash mà hàm đó đang tiêu thụ.
+
+\section{Giải thích thuật ngữ}
+
+\textbf{Cây Merkle.}
+Cây nhị phân xây trên các lá. Hai nút con ghép lại thành hash của cha, lần lượt đến một hash gốc. Gốc đổi khi bất kỳ lá nào đổi.
+
+\textbf{Lá.}
+Dữ liệu ở đáy cây. Trong bài, lá thứ \(i\) là chuỗi \texttt{data item i}, với \(i\) từ 0 đến 999. Trước khi đưa vào cây, lá được băm bằng \texttt{hash\_leaf}, có tiền tố \texttt{leaf:}.
+
+\textbf{Nút trong.}
+Nút không phải lá. Hash của nó là \texttt{hash\_internal\_node(trái, phải)}, với tiền tố \texttt{node:}. Hai tiền tố \texttt{leaf:} và \texttt{node:} tách miền băm, để hash của lá không bị nhận nhầm thành hash của nút trong.
+
+\textbf{Merkle root.}
+Hash ở đỉnh cây. Verifier hardcode sẵn root của 1000 lá này. Proof đúng khi tính ngược từ lá lên ra đúng giá trị đó.
+
+\textbf{Merkle proof.}
+Với một lá, proof là hash của nút anh em trên đường từ lá đó lên gốc. Không cần gửi cả cây. Verifier có lá, vị trí, và dãy hash này là dựng lại được root.
+
+\textbf{Nút anh em.}
+Nút cùng cha với nút đang xét. Vị trí chẵn thì nút đang xét nằm bên trái, anh em là nút kế bên phải. Vị trí lẻ thì ngược lại.
+
+\textbf{Chiều cao.}
+Trong code, chiều cao là \(\lceil \log_2 n \rceil\), với \(n\) là số lá. 1000 lá thì cao 10, tức proof có 10 hash.
+
+\textbf{Đệm.}
+1000 không phải lũy thừa của 2. Code thêm cho đủ \(2^{10} = 1024\) vị trí, phần thêm là byte \texttt{\textbackslash x00}. Nhờ vậy mỗi tầng ghép cặp chẵn, không phải xử lý nút lẻ.
+
+\section{Phân chia công việc}
+
+\begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X r@{}}
+\toprule
+Thành viên & MSHV & Việc & Tỷ lệ \\
+\midrule
+Nguyễn Duy Khánh & 20261120M &
+Tìm hiểu đề và đề xuất giải thuật: đọc prover, verifier, merkle\_utils, xác định proof cần những hash nào và verifier ghép chúng ra sao. & 25\% \\
+\addlinespace
+Lê Quang Huy & 20261106M &
+Đề xuất phương án và hoàn thiện code \texttt{gen\_merkle\_proof()}: lấy hash anh em từng tầng, gộp cặp bằng \texttt{hash\_internal\_node}, đi từ lá lên gốc. & 40\% \\
+\addlinespace
+Nguyễn Đức Thắng & 20261108M &
+Đề xuất phương án và review kết quả: đối chiếu lá 95 với file mẫu, chạy verifier với lá 683, sửa thử proof để chắc verifier từ chối proof sai. & 25\% \\
+\addlinespace
+AI & --- &
+Viết tóm tắt, giải thích đề và giải thích thuật ngữ trong báo cáo. & 10\% \\
+\bottomrule
+\end{tabularx}
+
+\section{Các câu prompt đã thực hiện}
+
+Ba câu dưới là prompt đã dùng để sinh đúng phần việc của AI: mục Tóm tắt, Giải thích đề và Giải thích thuật ngữ. Mỗi câu gửi kèm file đề và code starter, nên đoạn văn bám bài này.
+
+\begin{enumerate}
+\item \textbf{Tóm tắt.}
+\begin{quote}
+Đọc \texttt{instruct}, \texttt{prover.py} và \texttt{verifier.py}. Viết mục Tóm tắt cho báo cáo, tiếng Việt, ngắn. Nêu bài yêu cầu viết hàm nào, file nào giữ nguyên, cây cao bao nhiêu, proof gồm những gì, rồi kết quả khi đối chiếu lá 95 với \texttt{proof-for-leaf-95.txt} và khi chạy verifier với lá 683. Viết tự nhiên, không gò thành dàn ý cứng.
+\end{quote}
+
+\item \textbf{Giải thích đề.}
+\begin{quote}
+Dựa trên file đề, giải thích Programming Project \#1 cho người trong nhóm. Nói rõ bốn file starter làm gì: \texttt{prover.py} sinh lá và ghi những gì ra \texttt{merkle\_proof.txt}, \texttt{verifier.py} kiểm tra proof bằng cách nào, \texttt{merkle\_utils.py} cung cấp gì, \texttt{proof-for-leaf-95.txt} dùng để làm gì. Nhấn mạnh việc cần nộp chỉ là \texttt{gen\_merkle\_proof()}, và prover phải sinh đúng hash mà verifier đang dùng để dựng lại root. Bám đề, không thêm thuật toán ngoài bài.
+\end{quote}
+
+\item \textbf{Giải thích thuật ngữ.}
+\begin{quote}
+Giải thích các thuật ngữ xuất hiện trong code của bài, mỗi thuật ngữ một đoạn ngắn, tiếng Việt: cây Merkle, lá, nút trong, Merkle root, Merkle proof, nút anh em, chiều cao, đệm. Bám \texttt{merkle\_utils.py} và \texttt{prover.py}: tiền tố \texttt{leaf:} và \texttt{node:}, chiều cao là \(\lceil \log_2 n \rceil\), 1000 lá thì cao 10, đệm bằng byte \texttt{\textbackslash x00} cho đủ 1024 vị trí. Vị trí chẵn là con trái, vị trí lẻ là con phải.
+\end{quote}
+\end{enumerate}
+
+\end{document}
