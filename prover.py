@@ -1,5 +1,3 @@
-#!python3
-
 import sys
 import hashlib
 from base64 import b64encode, b64decode
@@ -55,10 +53,18 @@ def gen_merkle_proof(leaves, pos):
     level_pos = pos    # local copy of pos
 
     for level in range(height):
+        # sibling is the other child in the same parent
+        if level_pos % 2 == 0:
+            hashes.append(state[level_pos + 1])
+        else:
+            hashes.append(state[level_pos - 1])
+
         new_state = []
-        #######  YOUR CODE GOES HERE                              ######
-        #######     to hash internal nodes in the tree use the    ######
-        #######     function hash_internal_node(left,right)       ######
+        for i in range(0, len(state), 2):
+            new_state.append(hash_internal_node(state[i], state[i + 1]))
+
+        state = new_state
+        level_pos //= 2
 
     # Returns list of hashes that make up the Merkle Proof
     return hashes
